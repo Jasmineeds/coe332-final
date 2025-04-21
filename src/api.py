@@ -85,5 +85,23 @@ def delete_data():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/quake/<quake_id>', methods=['GET'])
+def get_quake(quake_id):
+    """
+    Retrieve earthquake data by quake_id from Redis.
+    """
+    try:
+        data = rd.get(f"earthquake:{quake_id}")
+
+        if data is None:
+            return jsonify({'error': f'Earthquake ID {quake_id} not found.'}), 404
+
+        quake_data = json.loads(data)
+
+        return jsonify(quake_data), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == "__main__":
     app.run(debug=True)
