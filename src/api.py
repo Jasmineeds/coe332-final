@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import requests
 import json
 from redis_client import rd
+from utils import parse_earthquake, parse_date_range, calculate_stats
 
 app = Flask(__name__)
 
@@ -25,35 +26,19 @@ def load_data():
         loaded_count = 0
 
         for item in data:
-            quake_id = item.get('id')
-            if not quake_id:
+            parsed = parse_earthquake(item)
+            if not parsed:
                 continue
-
-            properties = item.get('properties', {})
-            geometry = item.get('geometry', {})
-            coordinates = geometry.get('coordinates', [None, None, None])
-
-            mag = properties.get('mag')
-            time = properties.get('time')  # millisecond timestamp
-            longitude = float(coordinates[0])
-            latitude = float(coordinates[1])
-            depth = float(coordinates[2])
-
-            if None in (mag, depth, time, longitude, latitude):
-                continue
-            # Redis GEOADD only accepts valid coordinates
-            if not (-180 <= longitude <= 180) or not (-85.05112878 <= latitude <= 85.05112878):
-                continue
-
+            
             # a single quake's entire JSON data
-            rd.set(f"earthquake:{quake_id}", json.dumps(item))
+            rd.set(f"earthquake:{parsed['quake_id']}", json.dumps(item))
 
             # index quake in set
-            rd.sadd('earthquakes:ids', quake_id)
-            rd.zadd('earthquakes:by_mag', {quake_id: mag})
-            rd.zadd('earthquakes:by_depth', {quake_id: depth})
-            rd.zadd('earthquakes:by_time', {quake_id: time})
-            rd.geoadd('earthquakes:geo', (longitude, latitude, quake_id))
+            rd.sadd('earthquakes:ids', parsed['quake_id'])
+            rd.zadd('earthquakes:by_mag', {parsed['quake_id']: parsed['mag']})
+            rd.zadd('earthquakes:by_depth', {parsed['quake_id']: parsed['depth']})
+            rd.zadd('earthquakes:by_time', {parsed['quake_id']: parsed['time']})
+            rd.geoadd('earthquakes:geo', (parsed['longitude'], parsed['latitude'], parsed['quake_id']))
 
             loaded_count += 1
 
@@ -99,6 +84,61 @@ def get_quake(quake_id):
         quake_data = json.loads(data)
 
         return jsonify(quake_data), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/stats', methods=['GET'])
+def get_stats():
+    """
+    Get earthquake statistics within a given date range.
+
+    Args:
+        None.
+
+    Query Parameters:
+        start (str, optional): Start date in 'YYYY-MM-DD' format. If not provided, uses earliest record.
+        endt (str, optional): End date in 'YYYY-MM-DD' format. If not provided, uses latest record.
+
+    Returns:
+        Response: A JSON response containing:
+            - total_count (int)
+            - max_magnitude (float or None)
+            - min_magnitude (float or None)
+            - max_depth (float or None)
+            - min_depth (float or None)
+            - magtype_counts (dict)
+    """
+    try:
+        start_str = request.args.get('start')
+        end_str = request.args.get('end')
+
+        if start_str and end_str:
+            start_ms, end_ms = parse_date_range(start_str, end_str)
+        else:
+            # fetch the earliest and latest scores from earthquakes:by_time in Redis
+            first = rd.zrange('earthquakes:by_time', 0, 0, withscores=True)
+            last = rd.zrevrange('earthquakes:by_time', 0, 0, withscores=True)
+
+            if not first or not last:
+                return jsonify({'message': 'No earthquake data available.'}), 200
+
+            start_ms = int(first[0][1])
+            end_ms = int(last[0][1])
+
+        quake_ids = rd.zrangebyscore('earthquakes:by_time', start_ms, end_ms)
+
+        if not quake_ids:
+            return jsonify({'message': 'No earthquakes found in the given time range.'}), 200
+
+        stats = calculate_stats(quake_ids)
+
+        return jsonify({
+            'total_count': len(quake_ids),
+            'start_timestamp': start_ms,
+            'end_timestamp': end_ms,
+            **stats
+        }), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
