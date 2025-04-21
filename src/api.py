@@ -1,11 +1,9 @@
 from flask import Flask, request, jsonify
-import redis
 import requests
 import json
+from redis_client import rd
 
 app = Flask(__name__)
-
-rd = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
 
 # Data source
 USGS_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query.geojson?starttime=2025-03-01%2000:00:00&endtime=2025-03-31%2023:59:59"
