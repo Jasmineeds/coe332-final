@@ -50,8 +50,13 @@ This project uses earthquake information from the United States Geological Surve
     "ids": ",ak0252t9tlwp,",
     "mag": 1.6,
     "magType": "ml",
-    // ...
+    "...": "other properties are omitted for brevity"
   }
+}
+```
+```json
+{
+  "error": "Earthquake ID ak0252t9tlwp not found."
 }
 ```
 - **GET `/stats`**: Returns aggregated statistics about earthquake events.
@@ -77,5 +82,10 @@ This project uses earthquake information from the United States Geological Surve
     "mww": 7
   },
   "total_count": 789
+}
+```
+```json
+{
+  "message": "No earthquakes found in the given time range."
 }
 ```
