@@ -60,11 +60,13 @@ def delete_data():
     try:
         keys = rd.keys('earthquake:*') + rd.keys('earthquakes:*')
 
+        deleted_count = 0
         if keys:
             rd.delete(*keys)
+            deleted_count = len(keys)
 
         return jsonify({
-            'message': f'{len(keys)} keys deleted successfully.'
+            'message': f'{deleted_count} keys deleted successfully.'
         }), 200
 
     except Exception as e:
