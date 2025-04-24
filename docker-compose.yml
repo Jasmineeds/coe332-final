@@ -1,20 +1,40 @@
 version: '3.8'
 
 services:
-  web:
+  redis-db:
+    image: redis:7
+    ports:
+      - 6379:6379
+    volumes:
+      - ./data:/data
+    user: "1000:1000"
+    command: [ "--save", "1", "1" ]
+
+  flask-api:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: ./Dockerfile
+    depends_on:
+      - redis-db
     ports:
       - "5000:5000"
     environment:
-      - REDIS_HOST=redis
+      - REDIS_HOST=redis-db
       - REDIS_PORT=6379
-    depends_on:
-      - redis
+      - PYTHONPATH=src
+      - LOG_LEVEL=INFO
+    command: [ "python3", "src/api.py" ]
 
-  redis:
-    image: "redis:alpine"
-    ports:
-      - "6379:6379"
-    command: ["redis-server", "--appendonly", "yes"]
+  worker:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    scale: 1
+    depends_on:
+      - redis-db
+    environment:
+      - REDIS_HOST=redis-db
+      - REDIS_PORT=6379
+      - PYTHONPATH=src
+      - LOG_LEVEL=INFO
+    command: [ "python3", "src/worker.py" ]
