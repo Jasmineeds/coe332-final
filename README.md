@@ -6,6 +6,17 @@ This project uses earthquake information from the United States Geological Surve
 
 [Search Earthquake Catalog](https://earthquake.usgs.gov/earthquakes/search/)
 
+## Run Scripts
+
+Use command in Makefile for dev.
+```
+make up        # Start and build containers
+make down      # Stop and remove containers
+make ps        # List container status
+make reload    # load data into redis
+make clear     # delete data in redis
+```
+
 ## API Endpoints
 
 - **POST `/data`**: Load and cache the full earthquake dataset into Redis.
@@ -87,5 +98,59 @@ This project uses earthquake information from the United States Geological Surve
 ```json
 {
   "message": "No earthquakes found in the given time range."
+}
+```
+- **POST `/jobs`**: Create a new job. Add `start_date` and `end_date` in the parameters.
+
+**Command**
+
+```curl localhost:5000/jobs -X POST -d '{"start_date":"2025-03-01", "end_date":"2025-03-05"}' -H "Content-Type: application/json"```
+
+**Response**
+```json
+{
+  "id": "1271512c-bdbd-4576-a62c-79dad40fb1b3",
+  "start": "2025-03-01",
+  "end": "2025-03-05",
+  "status": "submitted"
+}
+```
+```json
+{
+  "error": "Please specify start_date and end_date."
+}
+```
+- **GET `/jobs`**: List all the jobs in the queue.
+
+**Command**
+
+```curl localhost:5000/jobs```
+
+**Response**
+```json
+[
+  "71a40474-5ce8-48fe-bafa-c80da91d8e8d",
+  "1271512c-bdbd-4576-a62c-79dad40fb1b3",
+  "78d63cf4-35c6-4d0e-8953-f0d7f64fb3ea"
+]
+```
+- **GET `/jobs/<jobid>`**: Get the information of a certain job.
+
+**Command**
+
+```curl localhost:5000/jobs/1271512c-bdbd-4576-a62c-79dad40fb1b3```
+
+**Response**
+```json
+{
+  "end": "2025-03-05",
+  "id": "1271512c-bdbd-4576-a62c-79dad40fb1b3",
+  "start": "2025-03-01",
+  "status": "in progress"
+}
+```
+```json
+{
+  "error": "Job 1271512c-bdbd-4576-a62c-79dad40fb1 not found"
 }
 ```

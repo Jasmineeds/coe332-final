@@ -1,8 +1,12 @@
 from flask import Flask, request, jsonify
 import requests
 import json
-from redis_client import rd
+from jobs import add_job, get_job_by_id
+from redis_client import rd, jdb, res
 from utils import parse_earthquake, parse_date_range, calculate_stats
+from logger_config import get_logger
+
+logger = get_logger(__name__)
 
 app = Flask(__name__)
 
@@ -145,5 +149,51 @@ def get_stats():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Jobs
+@app.route('/jobs', methods=['POST'])
+def submit_job():
+    """
+    Submit a new job by specifying start and end date.
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Missing JSON body"}), 400
+
+    start_date = data.get('start_date')
+    end_date = data.get('end_date')
+
+    if not start_date or not end_date:
+        return jsonify({"error": "Please specify start_date and end_date."}), 400
+
+    job = add_job(start_date, end_date)
+    logger.info(f"New job submitted: {job['id']}")
+    return jsonify(job), 202
+
+@app.route('/jobs', methods=['GET'])
+def list_jobs():
+    """
+    List all existing job IDs stored in Redis.
+    """
+    job_keys = jdb.keys()
+    job_ids = [key.decode('utf-8') for key in job_keys]
+    logger.info(f"Listed {len(job_ids)} jobs.")
+    return jsonify(job_ids), 200
+
+@app.route('/jobs/<jobid>', methods=['GET'])
+def get_job(jobid: str):
+    """
+    Get job details by job_id.
+    """
+    job_data = jdb.get(jobid)
+    if job_data is None:
+        return jsonify({'error': f'Job {jobid} not found'}), 404
+    try:
+        job = json.loads(job_data)
+        logger.info(f"Retrieved job data for job {jobid}.")
+        return jsonify(job), 200
+    except json.JSONDecodeError:
+        return jsonify({'error': f'Invalid JSON format for job {jobid}'}), 500
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    logger.info("Starting Flask app.")
+    app.run(debug=True, host='0.0.0.0', port=5000)
