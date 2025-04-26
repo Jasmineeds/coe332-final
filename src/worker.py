@@ -9,6 +9,11 @@ logger = get_logger(__name__)
 def do_work(jid: str) -> None:
     logger.info(f"Processing job: {jid}")
     update_job_status(jid, 'in progress')
+
+    job_data = get_job_by_id(jid)
+    job_type = job_data.get('type')
+    logger.info(f"Job {jid} type: {job_type}")
+
     time.sleep(10)   # there is no real work for now
     update_job_status(jid, 'complete')
 

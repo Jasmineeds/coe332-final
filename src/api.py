@@ -161,11 +161,12 @@ def submit_job():
 
     start_date = data.get('start_date')
     end_date = data.get('end_date')
+    job_type = data.get('job_type', 'magnitude_distribution')
 
     if not start_date or not end_date:
         return jsonify({"error": "Please specify start_date and end_date."}), 400
 
-    job = add_job(start_date, end_date)
+    job = add_job(start_date, end_date, job_type)
     logger.info(f"New job submitted: {job['id']}")
     return jsonify(job), 202
 
