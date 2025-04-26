@@ -100,11 +100,11 @@ make clear     # delete data in redis
   "message": "No earthquakes found in the given time range."
 }
 ```
-- **POST `/jobs`**: Create a new job. Add `start_date` and `end_date` in the parameters.
+- **POST `/jobs`**: Create a new job. Add `start_date`, `end_date`, `job_type` in the parameters.
 
 **Command**
 
-```curl localhost:5000/jobs -X POST -d '{"start_date":"2025-03-01", "end_date":"2025-03-05"}' -H "Content-Type: application/json"```
+```curl localhost:5000/jobs -X POST -d '{"start_date":"2025-03-01", "end_date":"2025-03-05", "job_type":"magnitude_distribution"}' -H "Content-Type: application/json"```
 
 **Response**
 ```json
@@ -112,6 +112,7 @@ make clear     # delete data in redis
   "id": "1271512c-bdbd-4576-a62c-79dad40fb1b3",
   "start": "2025-03-01",
   "end": "2025-03-05",
+  "type": "magnitude_distribution",
   "status": "submitted"
 }
 ```
@@ -143,9 +144,10 @@ make clear     # delete data in redis
 **Response**
 ```json
 {
-  "end": "2025-03-05",
   "id": "1271512c-bdbd-4576-a62c-79dad40fb1b3",
   "start": "2025-03-01",
+  "end": "2025-03-05",
+  "type": "magnitude_distribution",
   "status": "in progress"
 }
 ```
