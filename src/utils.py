@@ -1,5 +1,8 @@
 import json
 from datetime import datetime, timedelta
+import numpy as np
+import matplotlib.pyplot as plt
+from typing import List
 from redis_client import rd
 
 def parse_earthquake(item):
@@ -122,3 +125,74 @@ def calculate_stats(quake_ids):
         'min_depth': min_depth if min_depth != float('inf') else None,
         'magtype_counts': magtype_counts
     }
+
+def generate_empty_plot(message="No data available"):
+    """
+    Generate an empty plot with a message in the center.
+
+    Args:
+        message (str): Text to display on the plot.
+    
+    Returns:
+        (fig, ax): Matplotlib figure and axes objects.
+    """
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.text(0.5, 0.5, message, fontsize=15, ha='center', va='center', color='gray')
+    ax.axis('off')
+
+    return fig, ax
+
+def create_magnitude_plot(magnitudes: List[float], start_date: str, end_date: str):
+    """
+    Plot a histogram of earthquake magnitudes.
+
+    Args:
+        magnitudes (List[float]): List of earthquake magnitudes.
+        start_date (str): Start date in 'YYYY-MM-DD' format.
+        end_date (str): End date in 'YYYY-MM-DD' format.
+    Returns:
+        (fig, ax): Matplotlib figure and axis objects.
+    """
+    min_mag = 0
+    max_mag = 10
+    bins = np.arange(min_mag, max_mag + 1, 1)
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.hist(magnitudes, bins=bins, edgecolor='black', color='#FF5733', alpha=0.7)
+    ax.set_title(f'Magnitude Distribution from {start_date} to {end_date}')
+    ax.set_xlabel('Magnitude')
+    ax.set_ylabel('Number of Earthquakes')
+    ax.set_xticks(bins)
+
+    return fig, ax
+
+def generate_magnitude_histogram_bytes(start_date: str, end_date: str) -> bytes:
+    start_ms, end_ms = parse_date_range(start_date, end_date)
+    quake_ids = rd.zrangebyscore('earthquakes:by_time', start_ms, end_ms)
+
+    if not quake_ids:
+        fig, ax = generate_empty_plot("No data available")
+    else:
+        magnitudes = []
+        for quake_id in quake_ids:
+            key = f"earthquake:{quake_id}"
+            quake_data_raw = rd.get(key)
+            if quake_data_raw:
+                quake_data = json.loads(quake_data_raw)
+                mag = quake_data['properties'].get('mag')
+                if mag is not None:
+                    magnitudes.append(mag)
+
+        if magnitudes:
+            fig, ax = create_magnitude_plot(magnitudes, start_date, end_date)
+        else:
+            fig, ax = generate_empty_plot("No valid magnitudes")
+
+    file_path = 'output_image.png'
+    fig.savefig(file_path)
+    plt.close(fig)
+
+    with open(file_path, 'rb') as f:
+        img_bytes = f.read()
+
+    return img_bytes

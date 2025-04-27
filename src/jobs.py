@@ -18,7 +18,7 @@ def _generate_jid() -> str:
     logger.debug(f"Generated job ID: {jid}")
     return jid
 
-def _instantiate_job(jid: str, status: str, start: str, end: str) -> Dict[str, str]:
+def _instantiate_job(jid: str, status: str, start: str, end: str, job_type: str) -> Dict[str, str]:
     """
     Create the job object description as a python dictionary. Requires the job id,
     status, start and end parameters.
@@ -28,6 +28,7 @@ def _instantiate_job(jid: str, status: str, start: str, end: str) -> Dict[str, s
         status (str): current status of the job
         start (str): user-provided parameter
         end (str): user-provided parameter
+        job_type (str): job type
 
     Returns:
         dict: Job metadata dictionary.
@@ -36,7 +37,8 @@ def _instantiate_job(jid: str, status: str, start: str, end: str) -> Dict[str, s
         "id": jid,
         "status": status,
         "start": start,
-        "end": end
+        "end": end,
+        "type": job_type
     }
     logger.debug(f"Instantiated job: {job_dict}")
     return job_dict
@@ -62,7 +64,7 @@ def _queue_job(jid: str) -> None:
     q.put(jid)
     logger.info(f"Queued job {jid}.")
 
-def add_job(start: str, end: str, status: str = "submitted") -> Dict[str, str]:
+def add_job(start: str, end: str, job_type: str, status: str = "submitted") -> Dict[str, str]:
     """
     Add a new job: generate an ID, create job metadata, store it, queue it.
 
@@ -70,12 +72,13 @@ def add_job(start: str, end: str, status: str = "submitted") -> Dict[str, str]:
         start (str): Start date.
         end (str): End date.
         status (str): Job status (default: 'submitted').
+        job_type (str): Job type (default: )
 
     Returns:
         job_dict (dict): Job metadata dict.
     """
     jid = _generate_jid()
-    job_dict = _instantiate_job(jid, status, start, end)
+    job_dict = _instantiate_job(jid, status, start, end, job_type)
     _save_job(jid, job_dict)
     _queue_job(jid)
     logger.info(f"Added new job {jid}.")

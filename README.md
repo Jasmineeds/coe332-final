@@ -100,11 +100,11 @@ make clear     # delete data in redis
   "message": "No earthquakes found in the given time range."
 }
 ```
-- **POST `/jobs`**: Create a new job. Add `start_date` and `end_date` in the parameters.
+- **POST `/jobs`**: Create a new job. Add `start_date`, `end_date`, `job_type` in the parameters.
 
 **Command**
 
-```curl localhost:5000/jobs -X POST -d '{"start_date":"2025-03-01", "end_date":"2025-03-05"}' -H "Content-Type: application/json"```
+```curl localhost:5000/jobs -X POST -d '{"start_date":"2025-03-01", "end_date":"2025-03-05", "job_type":"magnitude_distribution"}' -H "Content-Type: application/json"```
 
 **Response**
 ```json
@@ -112,6 +112,7 @@ make clear     # delete data in redis
   "id": "1271512c-bdbd-4576-a62c-79dad40fb1b3",
   "start": "2025-03-01",
   "end": "2025-03-05",
+  "type": "magnitude_distribution",
   "status": "submitted"
 }
 ```
@@ -143,9 +144,10 @@ make clear     # delete data in redis
 **Response**
 ```json
 {
-  "end": "2025-03-05",
   "id": "1271512c-bdbd-4576-a62c-79dad40fb1b3",
   "start": "2025-03-01",
+  "end": "2025-03-05",
+  "type": "magnitude_distribution",
   "status": "in progress"
 }
 ```
@@ -154,3 +156,18 @@ make clear     # delete data in redis
   "error": "Job 1271512c-bdbd-4576-a62c-79dad40fb1 not found"
 }
 ```
+- **GET `/download/<jobid>`**: Download the result of a image job.
+
+**Command**
+
+```curl localhost:5000/download/e92ac09f-dbea-4aa8-a331-89f1fdbc7b42 --output earthquake_histogram.png```
+
+**Response**
+```
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 26674  100 26674    0     0  4351k      0 --:--:-- --:--:-- --:--:-- 5209k
+```
+
+Note:
+This command writes the returned PNG image to `earthquake_histogram.png` in your current directory. The service temporarily writes the image to `/app/images/<jobid>.png` before streaming.
