@@ -1,5 +1,6 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import requests
+import os
 import json
 from jobs import add_job, get_job_by_id
 from redis_client import rd, jdb, res
@@ -194,6 +195,58 @@ def get_job(jobid: str):
         return jsonify(job), 200
     except json.JSONDecodeError:
         return jsonify({'error': f'Invalid JSON format for job {jobid}'}), 500
+
+@app.route('/results/<jobid>', methods=['GET'])
+def get_results(jobid: str):
+    """
+    Retrieve the JSON result of a job.
+    """
+    if not res.exists(jobid):
+        return jsonify({"error": f"Result for job {jobid} not found."}), 404
+
+    raw_type = res.hget(jobid, 'type')
+    result_type = raw_type.decode('utf-8')
+
+    if result_type != 'json':
+        return jsonify({"error": f"Job {jobid} is not a JSON result."}), 400
+
+    raw_content = res.hget(jobid, 'content')
+    try:
+        data = json.loads(raw_content.decode('utf-8'))
+        return jsonify(data), 200
+    except json.JSONDecodeError:
+        return jsonify({"error": "Stored JSON is invalid."}), 500
+
+@app.route('/download/<jobid>', methods=['GET'])
+def download_image(jobid: str):
+    """
+    Download the image result of a job.
+    """
+    if not res.exists(jobid):
+        return jsonify({"error": f"Result for job {jobid} not found."}), 404
+
+    raw_type = res.hget(jobid, 'type')
+    result_type = raw_type.decode('utf-8')
+
+    if result_type != 'image':
+        return jsonify({"error": f"Job {jobid} is not an image result."}), 400
+
+    content = res.hget(jobid, 'content')
+    if content is None:
+        return jsonify({"error": f"No image data for job {jobid}."}), 500
+
+    # create images dir in container if not exit
+    os.makedirs('/app/images', exist_ok=True)
+    # temp file path
+    path = f"/app/images/{jobid}.png"
+
+    try:
+        with open(path, 'wb') as f:
+            f.write(content)
+        return send_file(path, mimetype='image/png', as_attachment=True)
+    
+    except Exception as e:
+        return jsonify({"error": f"Error writing image to file: {str(e)}"}), 500
 
 if __name__ == "__main__":
     logger.info("Starting Flask app.")
