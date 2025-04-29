@@ -248,6 +248,45 @@ def download_image(jobid: str):
     except Exception as e:
         return jsonify({"error": f"Error writing image to file: {str(e)}"}), 500
 
+#Help
+@app.route('/help', methods=['GET'])
+def help():
+    """
+    Returns a descriptions of the available routes in the API.
+    """
+    routes_info = {
+        '/data': {
+            'methods': ['POST', 'DELETE'],
+            'description': 'Load earthquake data from a source and store it in Redis (POST), or delete all earthquake-related data from Redis (DELETE).'
+        },
+        '/quake/<quake_id>': {
+            'methods': ['GET'],
+            'description': 'Retrieve earthquake data by quake_id from Redis.'
+        },
+        '/stats': {
+            'methods': ['GET'],
+            'description': 'Get earthquake statistics within a given date range.'
+        },
+        '/jobs': {
+            'methods': ['POST', 'GET'],
+            'description': 'Submit a new job specifying start and end date (POST), or list all existing job IDs (GET).'
+        },
+        '/jobs/<jobid>': {
+            'methods': ['GET'],
+            'description': 'Get job details by job_id.'
+        },
+        '/results/<jobid>': {
+            'methods': ['GET'],
+            'description': 'Retrieve the JSON result of a job.'
+        },
+        '/download/<jobid>': {
+            'methods': ['GET'],
+            'description': 'Download the image result of a job.'
+        }
+    }
+
+    return jsonify(routes_info), 200
+
 if __name__ == "__main__":
     logger.info("Starting Flask app.")
     app.run(debug=True, host='0.0.0.0', port=5000)
