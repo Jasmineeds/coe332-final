@@ -78,8 +78,39 @@ def delete_data():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/quake/<quake_id>', methods=['GET'])
-def get_quake(quake_id):
+@app.route('/quakes', methods=['GET'])
+def get_earthquake_ids():
+    """
+    Return a list of earthquake IDs stored in Redis.
+    Optional query parameter `limit`.
+    """
+    try:
+        ids = rd.smembers('earthquakes:ids')
+        if not ids:
+            logger.warning("No earthquake IDs found.")
+            return jsonify({'message': 'No earthquake data available'}), 404
+
+        earthquake_ids = list(ids)
+
+        # get limit
+        limit_param = request.args.get('limit')
+        if limit_param is not None:
+            try:
+                limit = int(limit_param)
+                if limit > 0:
+                    earthquake_ids = earthquake_ids[:limit]
+            except ValueError:
+                return jsonify({'error': 'Invalid limit parameter'}), 400
+
+        logger.info(f"Retrieved {len(earthquake_ids)} earthquake IDs.")
+        return jsonify(earthquake_ids), 200
+
+    except Exception as e:
+        logger.exception("Failed to fetch earthquake IDs")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/quakes/<quake_id>', methods=['GET'])
+def get_quake_data(quake_id):
     """
     Retrieve earthquake data by quake_id from Redis.
     """

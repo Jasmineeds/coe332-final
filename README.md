@@ -39,12 +39,30 @@ make clear     # delete data in redis
 ```json
 { "message": "11624 keys deleted successfully." }
 ```
-
-- **GET `/quake/<quake_id>`**: Retrieve a single earthquake data from Redis.
+- **GET `/quakes`**: Retrieve a list of all or partial earthquake IDs. Optional query parameter ```limit``` only return the first N entries.
 
 **Command**
 
-```curl -X GET http://localhost:5000/quake/ak0252t9tlwp```
+```curl -X GET http://localhost:5000/quakes?limit=3```
+
+**Response**
+```json
+[
+  "nc75143086",
+  "av93547601",
+  "uw62078791"
+]
+```
+```json
+{
+  "error": "Invalid limit parameter"
+}
+```
+- **GET `/quakes/<quake_id>`**: Retrieve a single earthquake data from Redis.
+
+**Command**
+
+```curl -X GET http://localhost:5000/quakes/ak0252t9tlwp```
 
 **Response**
 ```json
