@@ -4,7 +4,7 @@ import os
 import json
 from jobs import add_job, get_job_by_id
 from redis_client import rd, jdb, res
-from utils import parse_earthquake, parse_date_range, calculate_stats, parse_earthquakes_by_city, create_earthquake_by_city_histogram
+from utils import parse_earthquake, parse_date_range, calculate_stats, parse_earthquakes_by_city, create_earthquake_city_histogram
 from logger_config import get_logger
 import uuid
 
