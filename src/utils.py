@@ -199,30 +199,31 @@ def generate_magnitude_histogram_bytes(start_date: str, end_date: str) -> bytes:
 
     return img_bytes
 
-#functions needed to creat Occurence by City Histogram
+#functions needed to creat Occurrence by City Histogram
 def parse_earthquakes_by_city(start_date, end_date):
     """
     Parse USGS earthquake data and return counts by city for a specified time range.
 
-    Args:
-        start_date (str): Start date in format 'YYYY-MM-DD HH:MM:SS'
-        end_date (str): End date in format 'YYYY-MM-DD HH:MM:SS'
+    Inputs: #should be specified in README.md + write up!
+        start_date: in format 'YYYY-MM-DD HH:MM:SS'
+        end_date: in format 'YYYY-MM-DD HH:MM:SS'
 
     Returns:
-        dict: Dictionary with cities as keys and earthquake counts as values    """
+        dict with cities as keys and earthquake counts as values    
+        """
     try:
-        # Validate dates
+        #validate dates
         datetime.strptime(start_date, '%Y-%m-%d %H:%M:%S')
         datetime.strptime(end_date, '%Y-%m-%d %H:%M:%S')
 
-        # Construct API URL
+        #construct API URL
         base_url = "https://earthquake.usgs.gov/fdsnws/event/1/query.geojson"
         url = f"{base_url}?starttime={start_date}&endtime={end_date}&minmagnitude=2.5&orderby=time"
 
-        # Initialize counter
+        #counter
         city_counts = defaultdict(int)
 
-        # Fetch and process data
+        #fetch and process data
         response = requests.get(url)
         if response.status_code != 200:
             raise Exception(f"API request failed with status code: {response.status_code}")
@@ -232,7 +233,7 @@ def parse_earthquakes_by_city(start_date, end_date):
         for feature in data['features']:
             title = feature['properties']['title']
             try:
-                # Extract city name using regex pattern
+                #gets city name using regex pattern
                 location_part = title.split('-')[1].strip()
                 city_match = re.search(r'of\s+([^,]+)', location_part)
                 if city_match:
@@ -243,6 +244,7 @@ def parse_earthquakes_by_city(start_date, end_date):
 
         return dict(city_counts)
 
+    #error handling
     except ValueError as e:
         raise ValueError(f"Invalid date format: {str(e)}")
     except Exception as e:
@@ -252,55 +254,54 @@ def create_earthquake_city_histogram(start_date, end_date, output_path='earthqua
     """
     Creates a histogram of earthquake frequencies by city using data from the parser function.
 
-    Args:
-        start_date (str): Start date in format 'YYYY-MM-DD HH:MM:SS'
-        end_date (str): End date in format 'YYYY-MM-DD HH:MM:SS'
-        output_path (str): Path where the histogram image will be saved
+    Inputs:
+        start_date: in format 'YYYY-MM-DD HH:MM:SS'
+        end_date: in format 'YYYY-MM-DD HH:MM:SS'
+        output_path: path where the histogram image will be saved
 
     Returns:
-        str: Path to the saved histogram image
+        path to the saved histogram image
     """
     try:
-        # Get city count data using our previous function
+        #get city count data using function
         city_data = parse_earthquakes_by_city(start_date, end_date)
 
         if not city_data:
             raise ValueError("No earthquake data found for the specified time range")
-                                                                                    # Prepare data for plotting
+        #prep data for plotting
         cities = list(city_data.keys())
         counts = list(city_data.values())
 
-        # Create figure with appropriate size
+        #create figure
         plt.figure(figsize=(12, 6))
 
-        # Create bar plot
+        #bar plot
         bars = plt.bar(cities, counts)
 
-        # Customize the plot
+        #labels
         plt.title(f'Earthquake Frequency by City\n{start_date} to {end_date}')
         plt.xlabel('Cities')
         plt.ylabel('Number of Earthquakes')
 
-        # Rotate x-axis labels for better readability
         plt.xticks(rotation=45, ha='right')
 
-        # Add value labels on top of each bar
+        #values labels
         for bar in bars:
             height = bar.get_height()
             plt.text(bar.get_x() + bar.get_width()/2., height,
                     f'{int(height)}',
                     ha='center', va='bottom')
 
-        # Adjust layout to prevent label cutoff
+        #aesthetic
         plt.tight_layout()
 
-        # Save the plot
+        #save the plot
         plt.savefig(output_path)
         plt.close()
 
         return output_path
 
     except Exception as e:
-        plt.close()  # Ensure figure is closed in case of error
+        plt.close()  #figure is closed in case of error
         raise Exception(f"Error creating histogram: {str(e)}")
 
