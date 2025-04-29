@@ -163,7 +163,7 @@ def create_city_earthquake_histogram():
     }
     """
     try:
-        # Get and validate request data
+        #gets request data
         data = request.get_json()
         if not data:
             return jsonify({"error": "Missing request body"}), 400
@@ -174,20 +174,20 @@ def create_city_earthquake_histogram():
         if not all([start_date, end_date]):
             return jsonify({"error": "Both start_date and end_date are required"}), 400
 
-        # Create unique job ID and output path
+        #unique job ID and output path
         job_id = str(uuid.uuid4())
         output_dir = '/app/images'
         os.makedirs(output_dir, exist_ok=True)
         output_path = f'{output_dir}/histogram_{job_id}.png'
 
-        # Generate histogram using our previous functions
+        #creates histogram using utils.py functions
         create_earthquake_city_histogram(
             start_date=start_date,
             end_date=end_date,
             output_path=output_path
         )
 
-        # Store job information in Redis
+        #stores job info in Redis
         rd.hset(f'job:{job_id}', mapping={
             'status': 'complete',
             'start_date': start_date,
@@ -203,6 +203,7 @@ def create_city_earthquake_histogram():
             'download_url': f'/download/{job_id}'
         }), 200
 
+    #error handling
     except ValueError as e:
         return jsonify({"error": f"Date validation error: {str(e)}"}), 400
     except Exception as e:
