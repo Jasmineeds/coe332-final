@@ -100,6 +100,32 @@ make clear     # delete data in redis
   "message": "No earthquakes found in the given time range."
 }
 ```
+- **POST `/city-histogram`**: Creates a histogram of earthquake fequencies by city for a specified date range, through `start_date` and `end_date` parameters.
+
+**Command**
+
+```bash
+curl -X POST \
+  http://localhost:5000/city-histogram \
+  -H "Content-Type: application/json" \
+  -d '{
+    "start_date": "2025-02-27 00:00:00",
+    "end_date": "2025-03-29 23:59:59"
+  }'
+```
+Note: It is important that the backslash '\' is used to increase readability of the command, allowing a user to continue to the next line. Additionally, for the `start_date` and `end_date` parameters it is essential that the format is YYYY-MM-DD HH:MM:SS to avoid data validation errors.
+
+**Response**
+```json
+{
+    "job_id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "complete",
+    "message": "Histogram generated successfully",
+    "download_url": "/download/550e8400-e29b-41d4-a716-446655440000"
+}
+```
+Note: This command writes the returned PNG image to `earthquakes_by_city_histogram.png` in your current directory, with a path determined by its unique job_id in downloads.
+ 
 - **POST `/jobs`**: Create a new job. Add `start_date`, `end_date`, `job_type` in the parameters.
 
 **Command**
