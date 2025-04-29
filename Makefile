@@ -1,6 +1,6 @@
 # Build and run containers
 up:
-	docker-compose up --build
+	docker compose up --build
 
 # Stop and remove containers
 down:
