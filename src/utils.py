@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import List
 from redis_client import rd
+import re
+from collections import defaultdict
 
 def parse_earthquake(item):
     """
@@ -196,3 +198,109 @@ def generate_magnitude_histogram_bytes(start_date: str, end_date: str) -> bytes:
         img_bytes = f.read()
 
     return img_bytes
+
+#functions needed to creat Occurence by City Histogram
+def parse_earthquakes_by_city(start_date, end_date):
+    """
+    Parse USGS earthquake data and return counts by city for a specified time range.
+
+    Args:
+        start_date (str): Start date in format 'YYYY-MM-DD HH:MM:SS'
+        end_date (str): End date in format 'YYYY-MM-DD HH:MM:SS'
+
+    Returns:
+        dict: Dictionary with cities as keys and earthquake counts as values    """
+    try:
+        # Validate dates
+        datetime.strptime(start_date, '%Y-%m-%d %H:%M:%S')
+        datetime.strptime(end_date, '%Y-%m-%d %H:%M:%S')
+
+        # Construct API URL
+        base_url = "https://earthquake.usgs.gov/fdsnws/event/1/query.geojson"
+        url = f"{base_url}?starttime={start_date}&endtime={end_date}&minmagnitude=2.5&orderby=time"
+
+        # Initialize counter
+        city_counts = defaultdict(int)
+
+        # Fetch and process data
+        response = requests.get(url)
+        if response.status_code != 200:
+            raise Exception(f"API request failed with status code: {response.status_code}")
+
+        data = response.json()
+
+        for feature in data['features']:
+            title = feature['properties']['title']
+            try:
+                # Extract city name using regex pattern
+                location_part = title.split('-')[1].strip()
+                city_match = re.search(r'of\s+([^,]+)', location_part)
+                if city_match:
+                    city = city_match.group(1).strip()
+                    city_counts[city] += 1
+            except (IndexError, AttributeError):
+                continue
+
+        return dict(city_counts)
+
+    except ValueError as e:
+        raise ValueError(f"Invalid date format: {str(e)}")
+    except Exception as e:
+        raise Exception(f"Error processing earthquake data: {str(e)}")
+
+def create_earthquake_city_histogram(start_date, end_date, output_path='earthquake_histogram.png'):
+    """
+    Creates a histogram of earthquake frequencies by city using data from the parser function.
+
+    Args:
+        start_date (str): Start date in format 'YYYY-MM-DD HH:MM:SS'
+        end_date (str): End date in format 'YYYY-MM-DD HH:MM:SS'
+        output_path (str): Path where the histogram image will be saved
+
+    Returns:
+        str: Path to the saved histogram image
+    """
+    try:
+        # Get city count data using our previous function
+        city_data = parse_earthquakes_by_city(start_date, end_date)
+
+        if not city_data:
+            raise ValueError("No earthquake data found for the specified time range")
+                                                                                    # Prepare data for plotting
+        cities = list(city_data.keys())
+        counts = list(city_data.values())
+
+        # Create figure with appropriate size
+        plt.figure(figsize=(12, 6))
+
+        # Create bar plot
+        bars = plt.bar(cities, counts)
+
+        # Customize the plot
+        plt.title(f'Earthquake Frequency by City\n{start_date} to {end_date}')
+        plt.xlabel('Cities')
+        plt.ylabel('Number of Earthquakes')
+
+        # Rotate x-axis labels for better readability
+        plt.xticks(rotation=45, ha='right')
+
+        # Add value labels on top of each bar
+        for bar in bars:
+            height = bar.get_height()
+            plt.text(bar.get_x() + bar.get_width()/2., height,
+                    f'{int(height)}',
+                    ha='center', va='bottom')
+
+        # Adjust layout to prevent label cutoff
+        plt.tight_layout()
+
+        # Save the plot
+        plt.savefig(output_path)
+        plt.close()
+
+        return output_path
+
+    except Exception as e:
+        plt.close()  # Ensure figure is closed in case of error
+        raise Exception(f"Error creating histogram: {str(e)}")
+
