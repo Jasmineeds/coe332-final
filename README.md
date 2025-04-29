@@ -215,3 +215,34 @@ Note: This command writes the returned PNG image to `earthquakes_by_city_histogr
 
 Note:
 This command writes the returned PNG image to `earthquake_histogram.png` in your current directory. The service temporarily writes the image to `/app/images/<jobid>.png` before streaming.
+
+## Testing
+
+Integration tests and unit tests are located in the `test/` directory.
+
+1. Run the containers
+```
+docker-compose up --build
+```
+
+2. Open a new terminal and navigate to the test directory
+```
+cd test
+```
+
+3. Run tests
+```
+pytest
+```
+
+4. See results
+```
+============================= test session starts ==============================
+collected 12 items 
+
+test_api.py ......
+test_jobs.py .....  
+test_worker.py .  
+
+============================= 13 passed in 10.78s ===============================
+```
