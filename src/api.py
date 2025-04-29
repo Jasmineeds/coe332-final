@@ -4,8 +4,9 @@ import os
 import json
 from jobs import add_job, get_job_by_id
 from redis_client import rd, jdb, res
-from utils import parse_earthquake, parse_date_range, calculate_stats
+from utils import parse_earthquake, parse_date_range, calculate_stats, parse_earthquakes_by_city, create_earthquake_by_city_histogram
 from logger_config import get_logger
+import uuid
 
 logger = get_logger(__name__)
 
@@ -149,6 +150,63 @@ def get_stats():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/city-histogram', methods=['POST'])
+def create_city_earthquake_histogram():
+    """
+    Creates a histogram of earthquake frequencies by city for a specified date range.
+
+    Request body:
+    {
+        "start_date": "YYYY-MM-DD HH:MM:SS",
+        "end_date": "YYYY-MM-DD HH:MM:SS"
+    }
+    """
+    try:
+        # Get and validate request data
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Missing request body"}), 400
+
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+
+        if not all([start_date, end_date]):
+            return jsonify({"error": "Both start_date and end_date are required"}), 400
+
+        # Create unique job ID and output path
+        job_id = str(uuid.uuid4())
+        output_dir = '/app/images'
+        os.makedirs(output_dir, exist_ok=True)
+        output_path = f'{output_dir}/histogram_{job_id}.png'
+
+        # Generate histogram using our previous functions
+        create_earthquake_city_histogram(
+            start_date=start_date,
+            end_date=end_date,
+            output_path=output_path
+        )
+
+        # Store job information in Redis
+        rd.hset(f'job:{job_id}', mapping={
+            'status': 'complete',
+            'start_date': start_date,
+            'end_date': end_date,
+            'type': 'city_histogram',
+            'result_file': output_path
+        })
+
+        return jsonify({
+            'job_id': job_id,
+            'status': 'complete',
+            'message': 'Histogram generated successfully',
+            'download_url': f'/download/{job_id}'
+        }), 200
+
+    except ValueError as e:
+        return jsonify({"error": f"Date validation error: {str(e)}"}), 400
+    except Exception as e:
+        return jsonify({"error": f"Error generating histogram: {str(e)}"}), 500
 
 # Jobs
 @app.route('/jobs', methods=['POST'])
