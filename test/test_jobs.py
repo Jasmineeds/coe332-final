@@ -1,13 +1,11 @@
 import pytest
 import json
 from unittest.mock import patch, MagicMock
-
-# find modules in ../src
 import sys
 import os
+#get related jobs files/functionalities from src directory
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 from jobs import _generate_jid, _instantiate_job, add_job, get_job_by_id, update_job_status
-
 
 TEST_JOB_DATA = {
     "id": "abc-123",
@@ -17,17 +15,18 @@ TEST_JOB_DATA = {
     "type": "test_job_type"
 }
 
-def test_generate_jid():
+def test_generate_jid(): #tests job_id is the correct length/format
     jid = _generate_jid()
     assert isinstance(jid, str)
     assert len(jid) == 36  # length of UUID4 format
 
-def test_instantiate_job():
+def test_instantiate_job(): #tests the validity of job creation
     jid = "abc-123"
     job = _instantiate_job(jid, "submitted", "2025-03-01", "2025-03-03", "test_job_type")
     assert job == TEST_JOB_DATA
 
-@patch('jobs.q')
+#tests that jobs are being added to the queue and redis db
+@patch('jobs.q') #patch creates mock objects for test
 @patch('jobs.jdb')
 def test_add_job(mock_jdb, mock_q): # patch decorator affect db order
     mock_jdb.set = MagicMock()
@@ -40,15 +39,15 @@ def test_add_job(mock_jdb, mock_q): # patch decorator affect db order
     mock_jdb.set.assert_called_once()
     mock_q.put.assert_called_once()
 
-@patch('jobs.jdb')
-def test_get_job_by_id(mock_jdb):
+@patch('jobs.jdb') #mock object for test
+def test_get_job_by_id(mock_jdb): #tests that a user can get the correct info for a specific job id
     mock_jdb.get.return_value = json.dumps(TEST_JOB_DATA)
     
     job = get_job_by_id("abc-123")
     assert job["id"] == "abc-123"
 
-@patch('jobs.jdb')
-def test_update_job_status(mock_jdb):
+@patch('jobs.jdb') #mock object for test
+def test_update_job_status(mock_jdb): #tests that accurate job statuses are being given
     mock_jdb.get.return_value = json.dumps(TEST_JOB_DATA)
     mock_jdb.set = MagicMock()
 
