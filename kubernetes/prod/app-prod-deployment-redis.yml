@@ -1,0 +1,29 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-pvc-deployment
+  labels:
+    app: redis-pvc-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-pvc-app
+  template:
+    metadata:
+      labels:
+        app: redis-pvc-app
+    spec:
+      containers:
+        - name: redis
+          image: redis:7 
+          ports: 
+            - containerPort:6379
+          volumeMounts:
+            - name: redis-jasmineeds-data
+              mountPath: "/data"
+      volumes:
+        - name: redis-jasmineeds-data
+          persistentVolumeClaim:
+            claimName: redis-jasmineeds-data
