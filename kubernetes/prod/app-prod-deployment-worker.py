@@ -17,5 +17,12 @@ spec:
     spec:
       containers:
         - name: worker
-          image: ubuntu:22.04
-          command: ['sh', '-c', 'echo "Hello, Kubernetes!" && sleep 3600']
+          image: jasmineeds/tectonic-tantrums:v1.0.0
+          env: 
+            - name: REDIS_HOST
+              value: redis-service
+            - name: REDIS_PORT
+              value: "6379"
+            - name: PYTHONPATH
+              value: src
+          command: ["python3", "src/worker.py"]
