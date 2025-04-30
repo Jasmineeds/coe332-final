@@ -18,7 +18,14 @@ spec:
       containers:
         - name: flask-app
           imagePullPolicy: Always
-          image: ubuntu:22.04
+          image: jasmineeds/tectonic-tantrums:v1.0.0
           ports: 
           - name: http
             containerPort: 5000
+          env: 
+            - name: REDIS_HOST
+              value: redis-service
+            - name: REDIS_PORT
+              value: "6379"
+            - name: PYTHONPATH
+              value: src
