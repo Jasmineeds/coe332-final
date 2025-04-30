@@ -25,4 +25,6 @@ spec:
               value: "6379"
             - name: PYTHONPATH
               value: src
+            - name: LOG_LEVEL
+              value: INFO
           command: ["python3", "src/worker.py"]
