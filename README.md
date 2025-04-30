@@ -250,3 +250,24 @@ test_worker.py .
 
 ============================= 13 passed in 10.78s ===============================
 ```
+## Software Diagram
+![diagram](/img/diagram.png)
+
+The diagram illustrates the architecture of the project:
+
+### Redis
+
+- `db=0`: Stores USGC data fetched from a third-party source
+- `db=1`: Queue used by HotQueue for background job processing
+- `db=2`: Job metadata database (jdb), storing submitted job details
+- `db=3`: Stores job results (res) for retrieval
+
+### Flask Application
+
+- Hosts the API routes that handle user HTTP requests
+- Includes job logic for creating, retrieving, and updating jobs in Redis
+
+### Worker
+
+- Continuously listens to the Redis queue
+- Processes jobs and stores results in the result database
