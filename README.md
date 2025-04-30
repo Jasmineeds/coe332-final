@@ -1,5 +1,9 @@
 # Tectonic Tantrums: The Exploration of Earthquakes
 
+## Project Overview
+
+Tectonic Tantrums is a project designed to explore and analyze earthquake data using information sourced from the United States Geological Survey (USGS). This application allows users to load, query, and visualize seismic activity through a robust API. The goal of this software is to foster a deeper understanding of earthquakes. Through the API endpoints, users can retrieve earthquake statistics, generate histograms of earthquake frequencies by city, and manage data efficiently. The project emphasizes user interaction and data management, providing a comprehensive tool for researchers, educators, and anyone interested in the dynamics of seismic events. With features such as job management for processing data and integration with Redis for efficient data caching, Tectonic Tantrums serves as a valuable resource for analyzing global seismic activity.
+
 ## Data Source
 
 This project uses earthquake information from the United States Geological Survey (USGS) dataset, which provides authoritative and real-time data for global seismic activity. Get the dataset here:
@@ -142,7 +146,7 @@ Note: It is important that the backslash '\' is used to increase readability of 
     "download_url": "/download/550e8400-e29b-41d4-a716-446655440000"
 }
 ```
-Note: This command writes the returned PNG image to `earthquakes_by_city_histogram.png` in your current directory, with a path determined by its unique job_id in downloads.
+Note: This command writes the returned PNG image to `earthquakes_by_city_histogram.png`, with a path determined by its unique job_id in downloads. To access the file you can use the `\downloads\<job_id>` route.
  
 - **POST `/jobs`**: Create a new job. Add `start_date`, `end_date`, `job_type` in the parameters.
 
