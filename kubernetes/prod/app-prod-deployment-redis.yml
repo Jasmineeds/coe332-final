@@ -20,9 +20,9 @@ spec:
           image: ubuntu:22.04
           command: ['sh', '-c', 'echo "Hello, Kubernetes!" >> /data/out.txt && sleep 3600']
           volumeMounts:
-          - name: redis-<username>-data
+          - name: redis-jasmineeds-data
             mountPath: "/data"
       volumes:
-      - name: redis-<username>-data
+      - name: redis-jasmineeds-data
         persistentVolumeClaim:
-          claimName: redis-<username>-data
+          claimName: redis-jasmineeds-data
