@@ -10,9 +10,16 @@ This project uses earthquake information from the United States Geological Surve
 
 [Search Earthquake Catalog](https://earthquake.usgs.gov/earthquakes/search/)
 
-## Run Scripts
+## Getting Started 
+First, clone the repository to your local machine:
 
-Use command in Makefile for dev.
+```bash
+git clone git@github.com:Jasmineeds/coe332-final.git
+cd coe332-final
+```
+
+## Run Scripts
+Use commands in Makefile for development.
 ```
 make up        # Start and build containers
 make down      # Stop and remove containers
@@ -33,6 +40,8 @@ make clear     # delete data in redis
 ```json
 { "message": "Data loaded successfully: 11624 items stored." }
 ```
+
+
 - **DELETE `/data`**: Delete the cached dataset from Redis.
 
 **Command**
@@ -43,6 +52,8 @@ make clear     # delete data in redis
 ```json
 { "message": "11624 keys deleted successfully." }
 ```
+
+
 - **GET `/quakes`**: Retrieve a list of all or partial earthquake IDs. Optional query parameter ```limit``` only return the first N entries.
 
 **Command**
@@ -62,6 +73,8 @@ make clear     # delete data in redis
   "error": "Invalid limit parameter"
 }
 ```
+
+
 - **GET `/quakes/<quake_id>`**: Retrieve a single earthquake data from Redis.
 
 **Command**
@@ -92,6 +105,8 @@ make clear     # delete data in redis
   "error": "Earthquake ID ak0252t9tlwp not found."
 }
 ```
+
+
 - **GET `/stats`**: Returns aggregated statistics about earthquake events.
 
 **Command**
@@ -122,6 +137,8 @@ make clear     # delete data in redis
   "message": "No earthquakes found in the given time range."
 }
 ```
+
+
 - **POST `/city-histogram`**: Creates a histogram of earthquake fequencies by city for a specified date range, through `start_date` and `end_date` parameters.
 
 **Command**
@@ -148,6 +165,8 @@ Note: It is important that the backslash '\' is used to increase readability of 
 ```
 Note: This command writes the returned PNG image to `earthquakes_by_city_histogram.png`, with a path determined by its unique job_id in downloads. To access the file you can use the `\downloads\<job_id>` route.
  
+
+
 - **POST `/jobs`**: Create a new job. Add `start_date`, `end_date`, `job_type` in the parameters.
 
 **Command**
@@ -169,6 +188,8 @@ Note: This command writes the returned PNG image to `earthquakes_by_city_histogr
   "error": "Please specify start_date and end_date."
 }
 ```
+
+
 - **GET `/jobs`**: List all the jobs in the queue.
 
 **Command**
@@ -183,6 +204,8 @@ Note: This command writes the returned PNG image to `earthquakes_by_city_histogr
   "78d63cf4-35c6-4d0e-8953-f0d7f64fb3ea"
 ]
 ```
+
+
 - **GET `/jobs/<jobid>`**: Get the information of a certain job.
 
 **Command**
@@ -204,6 +227,8 @@ Note: This command writes the returned PNG image to `earthquakes_by_city_histogr
   "error": "Job 1271512c-bdbd-4576-a62c-79dad40fb1 not found"
 }
 ```
+
+
 - **GET `/download/<jobid>`**: Download the result of a image job.
 
 **Command**
@@ -219,6 +244,15 @@ Note: This command writes the returned PNG image to `earthquakes_by_city_histogr
 
 Note:
 This command writes the returned PNG image to `earthquake_histogram.png` in your current directory. The service temporarily writes the image to `/app/images/<jobid>.png` before streaming.
+
+
+
+- **GET `/help`**: Returns a short description of possible endpoints that can be used
+
+**Command**
+
+```curl localhost:5000/help```
+
 
 ## Testing
 
@@ -250,6 +284,7 @@ test_worker.py .
 
 ============================= 13 passed in 10.78s ===============================
 ```
+
 ## Software Diagram
 ![diagram](/img/diagram.png)
 
