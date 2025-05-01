@@ -352,6 +352,9 @@ def help():
 
 @app.route('/closest-earthquake', methods=['GET'])
 def closest_earthquake():
+    """
+    curl localhost:5000/closest-earthquake -X GET -d '{"lat":'30.2862175', "lon":'-97.739388'}' -H "Content-Type: application/json"
+    """
     try:
         data = request.get_json()
         if not data:
