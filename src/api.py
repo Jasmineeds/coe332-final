@@ -6,7 +6,10 @@ from jobs import add_job, get_job_by_id
 from redis_client import rd, jdb, res
 from utils import parse_earthquake, parse_date_range, calculate_stats, parse_earthquakes_by_city, create_earthquake_city_histogram
 from logger_config import get_logger
+from geopy import geodesic 
+from datetime import datetime, timedelta
 import uuid
+
 
 logger = get_logger(__name__)
 
@@ -182,65 +185,35 @@ def get_stats():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/city-histogram', methods=['POST'])
-def create_city_earthquake_histogram():
+@app.route('/city-histogram/<jobid>', methods=['POST'])
+def create_city_earthquake_histogram(jobid):
     """
-    Creates a histogram of earthquake frequencies by city for a specified date range.
-
-    Request body:
-    {
-        "start_date": "YYYY-MM-DD HH:MM:SS",
-        "end_date": "YYYY-MM-DD HH:MM:SS"
-    }
+    Creates a histogram of earthquake magnitudes for a specified date range.
     """
     try:
-        #gets request data
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "Missing request body"}), 400
+        item = get_job_by_id(jobid)
+        start_date = item['start_date']
+        end_date = item['end_date']
 
-        start_date = data.get('start_date')
-        end_date = data.get('end_date')
+        # Generate image bytes directly
+        img_bytes = generate_magnitude_histogram_bytes(start_date, end_date)
 
-        if not all([start_date, end_date]):
-            return jsonify({"error": "Both start_date and end_date are required"}), 400
-
-        #unique job ID and output path
-        job_id = str(uuid.uuid4())
+        # Optional: Save to disk if needed
         output_dir = '/app/images'
         os.makedirs(output_dir, exist_ok=True)
-        output_path = f'{output_dir}/histogram_{job_id}.png'
+        output_path = os.path.join(output_dir, f"histogram_{jobid}.png")
+        with open(output_path, 'wb') as f:
+            f.write(img_bytes)
 
-        #creates histogram using utils.py functions
-        create_earthquake_city_histogram(
-            start_date=start_date,
-            end_date=end_date,
-            output_path=output_path
-        )
+        # Return image bytes in response (or use redirect/download URL)
+        return Response(img_bytes, mimetype='image/png')
 
-        #stores job info in Redis
-        rd.hset(f'job:{job_id}', mapping={
-            'status': 'complete',
-            'start_date': start_date,
-            'end_date': end_date,
-            'type': 'city_histogram',
-            'result_file': output_path
-        })
-
-        return jsonify({
-            'job_id': job_id,
-            'status': 'complete',
-            'message': 'Histogram generated successfully',
-            'download_url': f'/download/{job_id}'
-        }), 200
-
-    #error handling
     except ValueError as e:
         return jsonify({"error": f"Date validation error: {str(e)}"}), 400
     except Exception as e:
         return jsonify({"error": f"Error generating histogram: {str(e)}"}), 500
 
-# Jobs
+
 @app.route('/jobs', methods=['POST'])
 def submit_job():
     """
@@ -376,6 +349,62 @@ def help():
     }
 
     return jsonify(routes_info), 200
+
+@app.route('/closest-earthquake', methods=['GET'])
+"""
+"""
+def closest_earthquake():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Missing JSON body"}), 400
+        
+        lat = float(data.get('lat'))
+        lon = float(data.get('lon'))
+
+        if not all([lat, lon]):
+            return jsonify({"error": "Both latitude and longitude are required"}), 400
+        
+        # Query USGS API (limit to recent 1000 quakes)
+        usgs_url = 'https://earthquake.usgs.gov/fdsnws/event/1/query'
+        date_a_week_ago = datetime.now() - timedelta(days=7)
+        iso_date_a_week_ago = date_a_week_ago.isoformat()
+        
+        params = {
+            'format': 'geojson',
+            'orderby': 'time',
+            'limit': 1000,  # Adjust for performance
+            'starttime': iso_date_a_week_ago,  # You can make this dynamic
+        }
+
+        response = requests.get(usgs_url, params=params)
+        data = response.json()
+
+        min_distance = float('inf')
+        closest_quake = None
+
+        for feature in data.get('features', []):
+            quake_coords = feature['geometry']['coordinates']
+            quake_latlon = (quake_coords[1], quake_coords[0])  # [lon, lat, depth]
+            distance_km = geodesic((lat, lon), quake_latlon).kilometers
+
+            if distance_km < min_distance:
+                min_distance = distance_km
+                closest_quake = feature
+
+        if closest_quake:
+            return jsonify({
+                'distance_km': round(min_distance, 2),
+                'location': closest_quake['properties']['place'],
+                'magnitude': closest_quake['properties']['mag'],
+                'time': closest_quake['properties']['time'],
+                'url': closest_quake['properties']['url']
+            })
+        else:
+            return jsonify({'error': 'No earthquake data found'}), 404
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     logger.info("Starting Flask app.")
