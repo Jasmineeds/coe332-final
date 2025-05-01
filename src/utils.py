@@ -252,7 +252,7 @@ def parse_earthquakes_by_city(start_date, end_date):
 
 """
 def create_earthquake_city_histogram(start_date, end_date, output_path=earthquake_city_histogram.png):
-    """
+
     Creates a histogram of earthquake frequencies by city using data from the parser function.
 
     Inputs:
@@ -262,7 +262,7 @@ def create_earthquake_city_histogram(start_date, end_date, output_path=earthquak
 
     Returns:
         path to the saved histogram image
-    """
+
     try:
         #get city count data using function
         city_data = parse_earthquakes_by_city(start_date, end_date)
