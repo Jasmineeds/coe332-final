@@ -250,6 +250,7 @@ def parse_earthquakes_by_city(start_date, end_date):
     except Exception as e:
         raise Exception(f"Error processing earthquake data: {str(e)}")
 
+"""
 def create_earthquake_city_histogram(start_date, end_date, output_path=earthquake_city_histogram.png):
     """
     Creates a histogram of earthquake frequencies by city using data from the parser function.
@@ -304,4 +305,4 @@ def create_earthquake_city_histogram(start_date, end_date, output_path=earthquak
     except Exception as e:
         plt.close()  #figure is closed in case of error
         raise Exception(f"Error creating histogram: {str(e)}")
-
+"""
