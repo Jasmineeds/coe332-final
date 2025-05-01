@@ -351,8 +351,6 @@ def help():
     return jsonify(routes_info), 200
 
 @app.route('/closest-earthquake', methods=['GET'])
-"""
-"""
 def closest_earthquake():
     try:
         data = request.get_json()
