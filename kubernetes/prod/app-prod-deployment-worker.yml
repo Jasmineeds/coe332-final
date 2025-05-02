@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: worker-prod
-          image: jasmineeds/tectonic-tantrums:v1.1.0
+          image: jasmineeds/tectonic-tantrums:v1.2.2
           imagePullPolicy: Always
           env:
           - name: LOG_LEVEL
