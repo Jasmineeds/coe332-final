@@ -1,0 +1,27 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-pvc-redis-deployment
+  labels:
+    app: redis-pvc-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-pvc-app
+  template:
+    metadata:
+      labels:
+        app: redis-pvc-app
+    spec:
+      containers:
+        - name: redis-test
+          image: redis
+          volumeMounts:
+          - name: redis-jasmineeds-data-test
+            mountPath: "/data"
+      volumes:
+      - name: redis-jasmineeds-data-test
+        persistentVolumeClaim:
+          claimName: redis-jasmineeds-data-test
