@@ -322,3 +322,7 @@ The diagram illustrates the architecture of the project:
 
 - Continuously listens to the Redis queue
 - Processes jobs and stores results in the result database
+
+## AI Usage Disclaimer
+
+Our team used AI to help us refine our test cases, use libraries such as geopy and debug errors on the command line. We learned that we could pass parameters with API calls to the USGS website in order to return more specific parts of the dataset. This helped us developed more complex routes such as the one that found the earthquake closest to the user. 
