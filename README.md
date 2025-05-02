@@ -253,6 +253,22 @@ This command writes the returned PNG image to `earthquake_histogram.png` in your
 
 ```curl localhost:5000/help```
 
+- **GET `/closest-earthquake`**: Returns information to do with the earthquake occuring closest to specified latitude and longitude values.
+
+**Command**
+
+```curl localhost:5000/closest-earthquake -X GET -d '{"lat":'30.2862175', "lon":'-97.739388'}' -H "Content-Type: application/json"```
+
+**Response**
+```
+{
+  "distance_km": 282.98,
+  "location": "1 km ESE of Asherton, Texas",
+  "magnitude": 2.3,
+  "time": 1745926348890,
+  "url": "https://earthquake.usgs.gov/earthquakes/eventpage/tx2025iimf"
+}
+```
 
 ## Testing
 
