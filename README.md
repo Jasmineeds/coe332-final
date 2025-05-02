@@ -51,7 +51,7 @@ tectonic-tantrums/
 │   ├── worker.py
 │   ├── utils.py
 │   ├── logger_config.py
-│   └── redis_clien.py
+│   └── redis_client.py
 └── test
     ├── test_flask_api.py
     ├── test_jobs.py
@@ -295,11 +295,38 @@ This command writes the returned PNG image to `earthquake_histogram.png` in your
 
 
 
-- **GET `/help`**: Returns a short description of possible endpoints that can be used
+- **GET `/help`**: Returns a short description of possible endpoints that can be used.
 
 **Command**
 
 ```curl localhost:5000/help```
+
+**Response**
+```json
+{
+  "/data": {
+    "description": "Load earthquake data from a source and store it in Redis (POST), or delete all earthquake-related data from Redis (DELETE).",
+    "methods": [
+      "POST",
+      "DELETE"
+    ]
+  },
+  "/download/<jobid>": {
+    "description": "Download the image result of a job.",
+    "methods": [
+      "GET"
+    ]
+  },
+  "/jobs": {
+    "description": "Submit a new job specifying start and end date (POST), or list all existing job IDs (GET).",
+    "methods": [
+      "POST",
+      "GET"
+    ]
+  },
+  "...": "others are omitted for brevity"
+}
+```
 
 - **GET `/closest-earthquake`**: Returns information to do with the earthquake occuring closest to specified latitude and longitude values.
 
@@ -308,7 +335,7 @@ This command writes the returned PNG image to `earthquake_histogram.png` in your
 ```curl localhost:5000/closest-earthquake -X GET -d '{"lat":'30.2862175', "lon":'-97.739388'}' -H "Content-Type: application/json"```
 
 **Response**
-```
+```json
 {
   "distance_km": 282.98,
   "location": "1 km ESE of Asherton, Texas",
