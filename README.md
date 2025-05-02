@@ -59,21 +59,116 @@ tectonic-tantrums/
 ```
 
 ## Getting Started 
-First, clone the repository to your local machine:
 
+### Run on Local Hardware (Jetstream)
+
+1. Clone the repository
+```
+git clone https://github.com/Jasmineeds/tectonic-tantrums.git
+```
+
+2. Navigate to the directory
+```
+cd tectonic-tantrums
+```
+
+3. Build the Containers
+```
+docker-compose up --build
+```
+
+Optional: Set environment log level in docker-compose.yml
+
+```
+environment:
+  - LOG_LEVEL=WARNING
+```
+
+4. Check the docker containers
+```
+docker ps -a 
+```
+
+Make sure all three containers are up.
+```
+CONTAINER ID   IMAGE           COMMAND                  CREATED          STATUS          PORTS                                       NAMES
+aea0146edbad   final_worker    "python3 worker.py"      10 seconds ago   Up 9 seconds    5000/tcp                                    final_worker_1
+04f460f170b2   final_flask-api "python3 api.py"         10 seconds ago   Up 9 seconds    0.0.0.0:5000->5000/tcp, :::5000->5000/tcp   final_flask-api_1
+557e4864aa9b   redis:7         "docker-entrypoint.s…"   10 seconds ago   Up 10 seconds   0.0.0.0:6379->6379/tcp, :::6379->6379/tcp   final_redis-db_1
+```
+
+The server will start in debug mode on ```https://localhost:5000```.
+
+5. Shut down the containers
+```
+docker-compose down 
+```
+
+### Run on a Kubernetes Cluster
+
+1. Clone the repository
+```
+git clone https://github.com/Jasmineeds/tectonic-tantrums.git
+```
+
+2. Navigate to the kubernetes directory
+- For test environment
+```
+cd tectonic-tantrums/kubernetes/test
+```
+- For production environment
+```
+cd tectonic-tantrums/kubernetes/prod
+```
+
+3. Apply manifests
+- For test environment
+```
+make apply-test
+```
+- For production environment
+```
+make apply-prod
+```
+
+or use `kubectl apply -f <yml-files>` to apply certain files.
+
+4. Check resources
 ```bash
-git clone git@github.com:Jasmineeds/coe332-final.git
-cd coe332-final
+kubectl get pods        # check the status of running pods
+kubectl get services    # check services and endpoints
+kubectl get ingress     # check ingress rules and host/path mappings
 ```
 
-## Run Scripts
-Use commands in Makefile for development.
+5. Access the application
+
+Try to access to the `/help` route!
+
+- For test environment
+```bash
+curl test-tectonic-tantrums.coe332.tacc.cloud/help
 ```
-make up        # Start and build containers
-make down      # Stop and remove containers
-make ps        # List container status
-make reload    # load data into redis
-make clear     # delete data in redis
+- For production environment
+```bash
+curl tectonic-tantrums.coe332.tacc.cloud/help
+```
+
+## Makefile
+Use the Makefile for simplified commands.
+```
+# ====================
+# Local Development
+# ====================
+make up           # Start and build containers
+make down         # Stop and remove containers
+make ps           # List container status
+make reload       # load data into redis
+make clear        # delete data in redis
+# ====================
+# Kubernetes deployment
+# ====================
+make apply-test   # Apply files to deploy the test env
+make apply-prod   # Apply files to deploy the prod env
 ```
 
 ## API Endpoints
