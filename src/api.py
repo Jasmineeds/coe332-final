@@ -353,7 +353,7 @@ def help():
 @app.route('/closest-earthquake', methods=['GET'])
 def closest_earthquake():
     """
-    curl localhost:5000/closest-earthquake -X GET -d '{"lat":'30.2862175', "lon":'-97.739388'}' -H "Content-Type: application/json"
+    Returns information about the earthquake closest to the latitude and longitude specified. 
     """
     try:
         data = request.get_json()
@@ -398,7 +398,6 @@ def closest_earthquake():
                 'distance_km': round(min_distance, 2),
                 'location': closest_quake['properties']['place'],
                 'magnitude': closest_quake['properties']['mag'],
-                'time': closest_quake['properties']['time'],
                 'url': closest_quake['properties']['url']
             })
         else:
