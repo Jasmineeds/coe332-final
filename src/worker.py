@@ -1,14 +1,15 @@
 import time
 import json
 from jobs import get_job_by_id, update_job_status
-from utils import generate_magnitude_histogram_bytes
+from utils import generate_magnitude_histogram_bytes, generate_city_quake_histogram_bytes
 from redis_client import q, res
 from logger_config import get_logger
 
 logger = get_logger(__name__)
 
 JOB_HANDLERS = {
-    'magnitude_distribution': generate_magnitude_histogram_bytes
+    'magnitude_distribution': generate_magnitude_histogram_bytes,
+    'earthquake_count_by_city': generate_city_quake_histogram_bytes
 }
 
 @q.worker
