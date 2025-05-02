@@ -2,33 +2,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flask-deployment
+  name: flask-deployment-prod
   labels:
-    app: flask-app
+    app: flask-api-prod
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: flask-app
+      app: flask-api-prod
   template:
     metadata:
       labels:
-        app: flask-app
+        app: flask-api-prod
     spec:
       containers:
-        - name: flask-app
+        - name: flask-api-prod
           imagePullPolicy: Always
-          image: jasmineeds/tectonic-tantrums:v1.0.0
-          ports: 
-          - name: http
-            containerPort: 5000
-          env: 
-            - name: REDIS_HOST
-              value: redis-service
-            - name: REDIS_PORT
-              value: "6379"
-            - name: PYTHONPATH
-              value: src
-            - name: LOG_LEVEL
-              value: INFO
+          image: jasmineeds/tectonic-tantrums:v1.2.2
+          ports:
+          - containerPort: 5000
+          env:
+          - name: LOG_LEVEL
+            value: "WARNING"
+          - name: PYTHONPATH
+            value: "src"
+          - name: REDIS_HOST
+            value: "redis-service-prod"
           command: ["python3", "src/api.py"]

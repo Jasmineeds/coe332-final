@@ -1,0 +1,27 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-deployment-prod
+  labels:
+    app: worker-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker-prod
+  template:
+    metadata:
+      labels:
+        app: worker-prod
+    spec:
+      containers:
+        - name: worker-prod
+          image: jasmineeds/tectonic-tantrums:v1.2.2
+          imagePullPolicy: Always
+          env:
+          - name: LOG_LEVEL
+            value: "WARNING"
+          - name: REDIS_HOST
+            value: "redis-service-prod"
+          command: ["python3", "src/worker.py"]

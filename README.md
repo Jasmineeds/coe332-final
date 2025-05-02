@@ -272,6 +272,8 @@ This command writes the returned PNG image to `earthquake_histogram.png` in your
 
 ## Testing
 
+### Testing on Local Hardware (Jetstream)
+
 Integration tests and unit tests are located in the `test/` directory.
 
 1. Run the containers
@@ -299,6 +301,45 @@ test_jobs.py .....
 test_worker.py .  
 
 ============================= 13 passed in 10.78s ===============================
+```
+
+### Testing on a Kubernetes Cluster (Test Env)
+
+1. Deploy to the Kubernetes cluster
+```
+kubectl apply -f <deployment-file>.yaml
+```
+2. Run the tests
+```
+kubectl apply -f app-test-job.yml
+```
+3. Check the status of the job
+```
+kubectl get jobs
+```
+```
+NAME       STATUS     COMPLETIONS   DURATION   AGE
+test-job   Complete   1/1           19s        11m
+```
+4. View the logs for the test job
+```
+kubectl logs job/test-job
+```
+```
+============================= test session starts ==============================
+platform linux -- Python 3.9.22, pytest-7.4.4, pluggy-1.5.0
+rootdir: /app
+collected 12 items
+
+tests/test_api.py ......                                                 [ 50%]
+tests/test_jobs.py .....                                                 [ 91%]
+tests/test_worker.py .                                                   [100%]
+
+============================= 12 passed in 14.00s ==============================
+```
+5. Delete the test job
+```
+kubectl delete job test-job
 ```
 
 ## Software Diagram

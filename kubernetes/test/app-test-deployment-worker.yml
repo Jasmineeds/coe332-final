@@ -2,30 +2,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flask-deployment-test
+  name: worker-deployment-test
   labels:
-    app: flask-api-test
+    app: worker-test
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: flask-api-test
+      app: worker-test
   template:
     metadata:
       labels:
-        app: flask-api-test
+        app: worker-test
     spec:
       containers:
-        - name: flask-api-test
-          imagePullPolicy: Always
+        - name: worker-test
           image: jasmineeds/tectonic-tantrums:v1.2.2
-          ports:
-          - containerPort: 5000
+          imagePullPolicy: Always
           env:
           - name: LOG_LEVEL
             value: "DEBUG"
-          - name: PYTHONPATH
-            value: "src"
           - name: REDIS_HOST
             value: "redis-service-test"
-          command: ["python3", "src/api.py"]
+          command: ["python3", "src/worker.py"]

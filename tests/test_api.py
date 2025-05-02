@@ -1,10 +1,11 @@
-import requests
+import os
 import time
 import re
+import requests
 import pytest
 
-api_host = 'localhost'
-api_port = '5000'
+api_host = os.getenv("API_HOST", "localhost")
+api_port = os.getenv("API_PORT", "5000")
 api_prefix = f'http://{api_host}:{api_port}'
 
 def test_load_data():
@@ -28,7 +29,7 @@ def test_get_quake_ids():
     if response.status_code == 200:
         assert isinstance(response.json(), list)
 
-def test_get_gene_data():
+def test_get_quake_data():
     quake_id = get_first_quake_id()
     response = requests.get(f"{api_prefix}/quakes/{quake_id}")
     assert response.status_code == 200

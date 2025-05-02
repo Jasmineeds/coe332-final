@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: test-job
+spec:
+  template:
+    spec:
+      containers:
+        - name: test-runner
+          image: jasmineeds/tectonic-tantrums:v1.2.2
+          command: ["pytest"]
+          env:
+            - name: API_HOST
+              value: flask-api-service-test
+            - name: API_PORT
+              value: "5000"
+      restartPolicy: Never

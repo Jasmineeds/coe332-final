@@ -2,12 +2,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-service-prod
+  name: redis-service-test
 spec:
   type: ClusterIP
   selector:
-    app: redis-prod
+    app: redis-test
   ports:
-  - name: redis-prod
+  - name: redis-test
     port: 6379
     targetPort: 6379
