@@ -1,5 +1,7 @@
 # Tectonic Tantrums: The Exploration of Earthquakes
 
+This is the final project for the COE 332 Software Engineering and Design, Spring 2025.
+
 ## Project Overview
 
 Tectonic Tantrums is a project designed to explore and analyze earthquake data using information sourced from the United States Geological Survey (USGS). This application allows users to load, query, and visualize seismic activity through a robust API. The goal of this software is to foster a deeper understanding of earthquakes. Through the API endpoints, users can retrieve earthquake statistics, generate histograms of earthquake frequencies by city, and manage data efficiently. The project emphasizes user interaction and data management, providing a comprehensive tool for researchers, educators, and anyone interested in the dynamics of seismic events. With features such as job management for processing data and integration with Redis for efficient data caching, Tectonic Tantrums serves as a valuable resource for analyzing global seismic activity.
@@ -134,10 +136,59 @@ make apply-prod
 or use `kubectl apply -f <yml-files>` to apply certain files.
 
 4. Check resources
+
+- Deployment
 ```bash
-kubectl get pods        # check the status of running pods
-kubectl get services    # check services and endpoints
-kubectl get ingress     # check ingress rules and host/path mappings
+kubectl get deployment
+```
+Check if deployments are `AVAILABLE` and `READY`
+```
+NAME                        READY   UP-TO-DATE   AVAILABLE   AGE
+flask-deployment-test       1/1     1            1           9h
+redis-deployment-test       1/1     1            1           9h
+test-pvc-redis-deployment   1/1     1            1           9h
+worker-deployment-test      1/1     1            1           9h
+```
+- Pods
+```bash
+kubectl get pods
+```
+Check if pods are `Running`
+```
+NAME                                       READY   STATUS      RESTARTS   AGE
+flask-deployment-test-59f89797bc-szjwl     1/1     Running     0          9h
+redis-deployment-test-859b9cb995-c2hrr     1/1     Running     0          9h
+test-pvc-redis-deployment-78967b54-zvzrr   1/1     Running     0          9h
+worker-deployment-test-db75f9c7f-b7tbk     1/1     Running     0          9h
+```
+- PVC
+```bash
+kubectl get pvc
+```
+Check if persistent volume claims (PVC) status is `Bound`
+```
+NAME                         STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+redis-jasmineeds-data-test   Bound    pvc-1ff063ba-6316-4859-a0fe-b7b76ac00657   1Gi        RWO            cinder-csi     <unset>                 9h
+```
+- Service
+```bash
+kubectl get services
+```
+Check services and endpoints. Check the exposed port and try `curl coe332.tacc.cloud:31762/`
+```
+NAME                              TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+flask-api-nodeport-service-test   NodePort    10.233.62.152   <none>        5000:31762/TCP   9h
+flask-api-service-test            ClusterIP   10.233.43.131   <none>        5000/TCP         9h
+redis-service-test                ClusterIP   10.233.38.210   <none>        6379/TCP         9h
+```
+- Ingress
+```bash
+kubectl get ingress
+```
+Check ingress rules and host/path mappings
+```
+NAME                     CLASS   HOSTS                                      ADDRESS        PORTS   AGE
+flask-api-ingress-test   nginx   test-tectonic-tantrums.coe332.tacc.cloud   10.233.1.210   80      9h
 ```
 
 5. Access the application
@@ -172,6 +223,8 @@ make apply-prod   # Apply files to deploy the prod env
 ```
 
 ## API Endpoints
+
+Replace `localhost:5000` with the Kubernetes ingress hostname when applicable. For example, `curl tectonic-tantrums.coe332.tacc.cloud/help`
 
 - **POST `/data`**: Load and cache the full earthquake dataset into Redis.
 
@@ -282,34 +335,6 @@ make apply-prod   # Apply files to deploy the prod env
 ```
 
 
-- **POST `/city-histogram`**: Creates a histogram of earthquake fequencies by city for a specified date range, through `start_date` and `end_date` parameters.
-
-**Command**
-
-```bash
-curl -X POST \
-  http://localhost:5000/city-histogram \
-  -H "Content-Type: application/json" \
-  -d '{
-    "start_date": "2025-02-27 00:00:00",
-    "end_date": "2025-03-29 23:59:59"
-  }'
-```
-Note: It is important that the backslash '\' is used to increase readability of the command, allowing a user to continue to the next line. Additionally, for the `start_date` and `end_date` parameters it is essential that the format is YYYY-MM-DD HH:MM:SS to avoid data validation errors.
-
-**Response**
-```json
-{
-    "job_id": "550e8400-e29b-41d4-a716-446655440000",
-    "status": "complete",
-    "message": "Histogram generated successfully",
-    "download_url": "/download/550e8400-e29b-41d4-a716-446655440000"
-}
-```
-Note: This command writes the returned PNG image to `earthquakes_by_city_histogram.png`, with a path determined by its unique job_id in downloads. To access the file you can use the `\downloads\<job_id>` route.
- 
-
-
 - **POST `/jobs`**: Create a new job. Add `start_date`, `end_date`, `job_type` in the parameters.
 
 **Command**
@@ -386,8 +411,56 @@ Note: This command writes the returned PNG image to `earthquakes_by_city_histogr
 ```
 
 Note:
-This command writes the returned PNG image to `earthquake_histogram.png` in your current directory. The service temporarily writes the image to `/app/images/<jobid>.png` before streaming.
+This command writes the returned PNG image to `earthquake_histogram.png` in your current directory.
 
+Output example:
+
+![earthquake histogram](/img/earthquake_histogram.png)
+
+
+- **GET `/closest-earthquake`**: Returns information to do with the earthquake occuring closest to specified latitude and longitude values.
+
+**Command**
+
+```curl localhost:5000/closest-earthquake -X GET -d '{"lat":'30.2862175', "lon":'-97.739388'}' -H "Content-Type: application/json"```
+
+**Response**
+```json
+{
+  "distance_km": 282.98,
+  "location": "1 km ESE of Asherton, Texas",
+  "magnitude": 2.3,
+  "time": 1745926348890,
+  "url": "https://earthquake.usgs.gov/earthquakes/eventpage/tx2025iimf"
+}
+```
+
+
+- **POST `/city-histogram`**: Creates a histogram of earthquake fequencies by city for a specified date range, through `start_date` and `end_date` parameters.
+
+**Command**
+
+```bash
+curl -X POST \
+  http://localhost:5000/city-histogram \
+  -H "Content-Type: application/json" \
+  -d '{
+    "start_date": "2025-02-27 00:00:00",
+    "end_date": "2025-03-29 23:59:59"
+  }'
+```
+Note: It is important that the backslash '\' is used to increase readability of the command, allowing a user to continue to the next line. Additionally, for the `start_date` and `end_date` parameters it is essential that the format is YYYY-MM-DD HH:MM:SS to avoid data validation errors.
+
+**Response**
+```json
+{
+    "job_id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "complete",
+    "message": "Histogram generated successfully",
+    "download_url": "/download/550e8400-e29b-41d4-a716-446655440000"
+}
+```
+Note: This command writes the returned PNG image to `earthquakes_by_city_histogram.png`, with a path determined by its unique job_id in downloads. To access the file you can use the `\downloads\<job_id>` route.
 
 
 - **GET `/help`**: Returns a short description of possible endpoints that can be used.
@@ -423,23 +496,6 @@ This command writes the returned PNG image to `earthquake_histogram.png` in your
 }
 ```
 
-- **GET `/closest-earthquake`**: Returns information to do with the earthquake occuring closest to specified latitude and longitude values.
-
-**Command**
-
-```curl localhost:5000/closest-earthquake -X GET -d '{"lat":'30.2862175', "lon":'-97.739388'}' -H "Content-Type: application/json"```
-
-**Response**
-```json
-{
-  "distance_km": 282.98,
-  "location": "1 km ESE of Asherton, Texas",
-  "magnitude": 2.3,
-  "time": 1745926348890,
-  "url": "https://earthquake.usgs.gov/earthquakes/eventpage/tx2025iimf"
-}
-```
-
 ## Testing
 
 ### Testing on Local Hardware (Jetstream)
@@ -470,7 +526,7 @@ test_api.py ......
 test_jobs.py .....  
 test_worker.py .  
 
-============================= 13 passed in 10.78s ===============================
+============================= 12 passed in 10.78s ===============================
 ```
 
 ### Testing on a Kubernetes Cluster (Test Env)
@@ -533,6 +589,14 @@ The diagram illustrates the architecture of the project:
 
 - Continuously listens to the Redis queue
 - Processes jobs and stores results in the result database
+
+### Kubernetes
+
+- **Deployment**: Manages application state, including replicas, resources, and container images.
+- **Pod**: Represents a running instance of a process in the cluster, including one or more containers.
+- **PVC (Persistent Volume Claim)**: Requests persistent storage for data retention even when Pods are deleted or restarted.
+- **Service**: Exposes applications running on Pods for network communication with other services.
+- **Ingress**: Controls external access to services, defining routing rules for traffic.
 
 ## AI Usage Disclaimer
 
