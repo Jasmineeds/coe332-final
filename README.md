@@ -464,6 +464,10 @@ Note: It is important that the backslash '\' is used to increase readability of 
 ```
 Note: This command writes the returned PNG image with a path determined by its unique job_id in downloads. To access the file you can use the `\downloads\<job_id>` route.
 
+Output example:
+
+![city histogram](/img/city_histogram.png)
+
 
 - **GET `/help`**: Returns a short description of possible endpoints that can be used.
 
