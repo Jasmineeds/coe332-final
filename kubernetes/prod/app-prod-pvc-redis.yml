@@ -1,12 +1,27 @@
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: redis-jasmineeds-data
+  name: prod-pvc-redis-deployment
+  labels:
+    app: redis-pvc-app
 spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: cinder-csi
-  resources:
-    requests:
-      storage: 1Gi
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-pvc-app
+  template:
+    metadata:
+      labels:
+        app: redis-pvc-app
+    spec:
+      containers:
+        - name: redis-prod
+          image: redis
+          volumeMounts:
+          - name: redis-jasmineeds-data-prod
+            mountPath: "/data"
+      volumes:
+      - name: redis-jasmineeds-data-prod
+        persistentVolumeClaim:
+          claimName: redis-jasmineeds-data-prod
