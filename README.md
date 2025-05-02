@@ -10,6 +10,54 @@ This project uses earthquake information from the United States Geological Surve
 
 [Search Earthquake Catalog](https://earthquake.usgs.gov/earthquakes/search/)
 
+## Structure
+```
+tectonic-tantrums/
+├── data
+│   └── .gitcanary
+├── img
+│   ├── earthquake_histogram.png
+│   └── diagram.png
+├── docker-compose.yml
+├── Dockerfile
+├── kubernetes
+│   ├── prod
+│   │   ├── app-prod-deployment-flask.yml
+│   │   ├── app-prod-deployment-redis.yml
+│   │   ├── app-prod-deployment-worker.yml
+│   │   ├── app-prod-ingress-flask.yml
+│   │   ├── app-prod-pvc-redis.yml
+│   │   ├── app-prod-service-flask.yml
+│   │   ├── app-prod-service-nodeport-flask.yml
+│   │   ├── app-prod-service-redis.yml
+│   │   └── pvc-basic.yaml
+│   └── test
+│       ├── app-test-deployment-flask.yml
+│       ├── app-test-deployment-redis.yml
+│       ├── app-test-deployment-worker.yml
+│       ├── app-test-ingress-flask.yml
+│       ├── app-test-pvc-redis.yml
+│       ├── app-test-service-flask.yml
+│       ├── app-test-service-nodeport-flask.yml
+│       ├── app-test-service-redis.yml
+│       ├── pvc-basic.yaml
+│       └── app-test-job.yml
+├── Makefile
+├── README.md
+├── requirements.txt
+├── src
+│   ├── flask_api.py
+│   ├── jobs.py
+│   ├── worker.py
+│   ├── utils.py
+│   ├── logger_config.py
+│   └── redis_clien.py
+└── test
+    ├── test_flask_api.py
+    ├── test_jobs.py
+    └── test_worker.py
+```
+
 ## Getting Started 
 First, clone the repository to your local machine:
 
