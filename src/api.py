@@ -4,7 +4,7 @@ import os
 import json
 from jobs import add_job, get_job_by_id
 from redis_client import rd, jdb, res
-from utils import parse_earthquake, parse_date_range, calculate_stats, parse_earthquakes_by_city, generate_magnitude_histogram_bytes
+from utils import parse_earthquake, parse_date_range, calculate_stats, generate_magnitude_histogram_bytes
 from geopy.distance import geodesic
 from datetime import datetime, timedelta
 from logger_config import get_logger
@@ -185,33 +185,28 @@ def get_stats():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/city-histogram/<jobid>', methods=['POST'])
-def create_city_earthquake_histogram(jobid):
+@app.route('/city-histogram', methods=['POST'])
+def create_city_earthquake_histogram():
     """
     Creates a histogram of earthquake magnitudes for a specified date range.
     """
     try:
-        item = get_job_by_id(jobid)
-        start_date = item['start_date']
-        end_date = item['end_date']
+        data = request.get_json()
+        start_date = data['start_date']
+        end_date = data['end_date']
 
-        # Generate image bytes directly
-        img_bytes = generate_magnitude_histogram_bytes(start_date, end_date)
+        with app.test_client() as client:
+            response = client.post('/jobs', json={
+                'start_date': start_date,
+                'end_date': end_date,
+                'job_type': 'earthquake_count_by_city'
+            })
+            job_result = response.get_json()
+        
+        return jsonify(job_result), 200
 
-        # Optional: Save to disk if needed
-        output_dir = '/app/images'
-        os.makedirs(output_dir, exist_ok=True)
-        output_path = os.path.join(output_dir, f"histogram_{jobid}.png")
-        with open(output_path, 'wb') as f:
-            f.write(img_bytes)
-
-        # Return image bytes in response (or use redirect/download URL)
-        return Response(img_bytes, mimetype='image/png')
-
-    except ValueError as e:
-        return jsonify({"error": f"Date validation error: {str(e)}"}), 400
-    except Exception as e:
-        return jsonify({"error": f"Error generating histogram: {str(e)}"}), 500
+    except KeyError:
+        return jsonify({'error': 'Missing start_date or end_date'}), 400
 
 
 @app.route('/jobs', methods=['POST'])

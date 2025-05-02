@@ -446,7 +446,8 @@ curl -X POST \
   -H "Content-Type: application/json" \
   -d '{
     "start_date": "2025-02-27 00:00:00",
-    "end_date": "2025-03-29 23:59:59"
+    "end_date": "2025-03-29 23:59:59",
+    "job_type": "earthquake_count_by_city"
   }'
 ```
 Note: It is important that the backslash '\' is used to increase readability of the command, allowing a user to continue to the next line. Additionally, for the `start_date` and `end_date` parameters it is essential that the format is YYYY-MM-DD HH:MM:SS to avoid data validation errors.
@@ -454,13 +455,18 @@ Note: It is important that the backslash '\' is used to increase readability of 
 **Response**
 ```json
 {
-    "job_id": "550e8400-e29b-41d4-a716-446655440000",
-    "status": "complete",
-    "message": "Histogram generated successfully",
-    "download_url": "/download/550e8400-e29b-41d4-a716-446655440000"
+  "id": "c6a1b3a9-88c2-4181-9ad8-9db7880f08e0",
+  "start": "2025-03-01 00:00:00",
+  "end": "2025-03-10 23:59:59",
+  "status": "submitted",
+  "type": "earthquake_count_by_city"
 }
 ```
-Note: This command writes the returned PNG image to `earthquakes_by_city_histogram.png`, with a path determined by its unique job_id in downloads. To access the file you can use the `\downloads\<job_id>` route.
+Note: This command writes the returned PNG image with a path determined by its unique job_id in downloads. To access the file you can use the `\downloads\<job_id>` route.
+
+Output example:
+
+![city histogram](/img/city_histogram.png)
 
 
 - **GET `/help`**: Returns a short description of possible endpoints that can be used.

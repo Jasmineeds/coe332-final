@@ -1,13 +1,16 @@
 import json
-from datetime import datetime, timedelta
-import numpy as np
-import matplotlib.pyplot as plt
-from typing import List
-from redis_client import rd
 import re
+import time
 from collections import defaultdict
+from datetime import datetime, timedelta
+from typing import List, Dict, Optional, Any, Tuple
+import matplotlib.pyplot as plt
+import numpy as np
+import requests
+from redis_client import rd
 
-def parse_earthquake(item):
+
+def parse_earthquake(item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """
     Parse a single earthquake item.
 
@@ -56,7 +59,7 @@ def parse_earthquake(item):
         'mag_type': mag_type
     }
 
-def parse_date_range(start_str, end_str):
+def parse_date_range(start_str: str, end_str: str) -> Tuple[int, int]:
     """
     Parse start and end date strings into millisecond timestamps.
 
@@ -76,7 +79,7 @@ def parse_date_range(start_str, end_str):
 
     return start_ms, end_ms
 
-def calculate_stats(quake_ids):
+def calculate_stats(quake_ids: List[str]) -> dict:
     """
     Calculate stats from a list of earthquake IDs.
 
@@ -128,7 +131,7 @@ def calculate_stats(quake_ids):
         'magtype_counts': magtype_counts
     }
 
-def generate_empty_plot(message="No data available"):
+def generate_empty_plot(message: str = "No data available") -> tuple:
     """
     Generate an empty plot with a message in the center.
 
@@ -169,6 +172,17 @@ def create_magnitude_plot(magnitudes: List[float], start_date: str, end_date: st
     return fig, ax
 
 def generate_magnitude_histogram_bytes(start_date: str, end_date: str) -> bytes:
+    """
+    Generates a histogram of earthquake magnitudes within date range
+    and returns as a PNG image in byte format.
+
+    Args:
+        start_date (str): in format YYYY-MM-DD e.g., '2025-03-01'
+        end_date (str): in format YYYY-MM-DD e.g., '2025-03-10'
+
+    Returns:
+        bytes: A PNG image in byte format
+    """
     start_ms, end_ms = parse_date_range(start_date, end_date)
     quake_ids = rd.zrangebyscore('earthquakes:by_time', start_ms, end_ms)
 
@@ -190,7 +204,7 @@ def generate_magnitude_histogram_bytes(start_date: str, end_date: str) -> bytes:
         else:
             fig, ax = generate_empty_plot("No valid magnitudes")
 
-    file_path = 'output_image.png'
+    file_path = f'output_image_{int(time.time())}.png'
     fig.savefig(file_path)
     plt.close(fig)
 
@@ -199,31 +213,31 @@ def generate_magnitude_histogram_bytes(start_date: str, end_date: str) -> bytes:
 
     return img_bytes
 
-#functions needed to creat Occurrence by City Histogram
-def parse_earthquakes_by_city(start_date, end_date):
+# Create Occurrence by City Histogram
+def parse_earthquakes_by_city(start_date: str, end_date: str) -> dict:
     """
     Parse USGS earthquake data and return counts by city for a specified time range.
 
-    Inputs: #should be specified in README.md + write up!
+    Inputs:
         start_date: in format 'YYYY-MM-DD HH:MM:SS'
         end_date: in format 'YYYY-MM-DD HH:MM:SS'
 
     Returns:
         dict with cities as keys and earthquake counts as values    
-        """
+    """
     try:
-        #validate dates
+        # validate dates
         datetime.strptime(start_date, '%Y-%m-%d %H:%M:%S')
         datetime.strptime(end_date, '%Y-%m-%d %H:%M:%S')
 
-        #construct API URL
+        # construct API URL
         base_url = "https://earthquake.usgs.gov/fdsnws/event/1/query.geojson"
-        url = f"{base_url}?starttime={start_date}&endtime={end_date}&minmagnitude=2.5&orderby=time"
+        url = f"{base_url}?starttime={start_date}&endtime={end_date}&orderby=time"
 
-        #counter
+        # counter
         city_counts = defaultdict(int)
 
-        #fetch and process data
+        # fetch and process data
         response = requests.get(url)
         if response.status_code != 200:
             raise Exception(f"API request failed with status code: {response.status_code}")
@@ -233,7 +247,7 @@ def parse_earthquakes_by_city(start_date, end_date):
         for feature in data['features']:
             title = feature['properties']['title']
             try:
-                #gets city name using regex pattern
+                # gets city name using regex pattern
                 location_part = title.split('-')[1].strip()
                 city_match = re.search(r'of\s+([^,]+)', location_part)
                 if city_match:
@@ -244,9 +258,41 @@ def parse_earthquakes_by_city(start_date, end_date):
 
         return dict(city_counts)
 
-    #error handling
+    # error handling
     except ValueError as e:
         raise ValueError(f"Invalid date format: {str(e)}")
     except Exception as e:
         raise Exception(f"Error processing earthquake data: {str(e)}")
 
+def generate_city_quake_histogram_bytes(start_date: str, end_date: str) -> bytes:
+    """
+    Generates a horizontal bar chart of the top 10 cities by earthquake occurrence 
+    within the date range and returns the image as a PNG byte.
+
+    Args:
+        start_date (str): in format YYYY-MM-DD e.g., '2025-03-01'
+        end_date (str): in format YYYY-MM-DD e.g., '2025-03-10'
+
+    Returns:
+        bytes: A PNG image in byte format
+    """
+    data = parse_earthquakes_by_city(start_date, end_date)
+    top_cities = sorted(data.items(), key=lambda x: x[1], reverse=True)[:10]
+
+    cities = [city for city, count in top_cities]
+    counts = [count for city, count in top_cities]
+
+    # plot format
+    fig = plt.figure(figsize=(12, 6))
+    plt.barh(cities[::-1], counts[::-1], color='skyblue')  # city with max count on top
+    plt.xlabel('Number of Earthquakes')
+    plt.title(f'Top 10 Cities by Earthquake Occurrence\n({start_date} to {end_date})')
+
+    file_path = f'output_image_{int(time.time())}.png'
+    fig.savefig(file_path)
+    plt.close(fig)
+
+    with open(file_path, 'rb') as f:
+        img_bytes = f.read()
+
+    return img_bytes
